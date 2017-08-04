@@ -100,7 +100,7 @@ class Agent:
     
         
 
-def PlayEpisode(env, agent, epsilon, gamma, video):
+def PlayEpisode(env, agent, epsilon, gamma):
     # Reset playing environment.
     s_t0 = env.reset()
 
@@ -109,8 +109,6 @@ def PlayEpisode(env, agent, epsilon, gamma, video):
     episode_over = False
 
     while (not episode_over):
-        if video == True:
-            env.render()
         # Determine whether to explore or exploit.
         if (np.random.random() < epsilon):
             # Explore.
@@ -123,7 +121,7 @@ def PlayEpisode(env, agent, epsilon, gamma, video):
         s_t1, reward, episode_over, info = env.step(a_t0)
         time_steps += 1
 
-
+        #reward -= s_t0[0]*s_t0[0]*0.003  # Try to keep cart in middle.
         total_episode_reward += reward
 
         # Check if episode is over, if yes and episode hasn't reached
@@ -131,6 +129,7 @@ def PlayEpisode(env, agent, epsilon, gamma, video):
         if episode_over and (time_steps < 500):
             reward -= 300
 
+        
         # Calculate return and update Q.
         G = reward + gamma*agent.GetMaxQ(s_t1)
         agent.UpdateQ(s_t0, a_t0, G)
@@ -159,7 +158,7 @@ if __name__ == '__main__':
 
     rl_agent = Agent(initial_alpha, 10**4, 2, states_dis)
 
-    episode_num = 15000
+    episode_num = 1500
     all_episode_r = np.zeros(episode_num)
     max_episode_r = 0
     best_100_avg = 0
@@ -169,7 +168,7 @@ if __name__ == '__main__':
         eps = 1.0/np.sqrt(i+1)
 
         # Play episode.
-        ep_reward = PlayEpisode(environment, rl_agent, eps, gamma, False)
+        ep_reward = PlayEpisode(environment, rl_agent, eps, gamma)
         all_episode_r[i] = ep_reward
 
         # Record max reward from last 100 episodes.
@@ -219,7 +218,7 @@ if __name__ == '__main__':
     
 
     for i in range(episode_num):
-        all_episode_r[i] = PlayEpisode(environment, rl_agent, 0, gamma, True)
+        all_episode_r[i] = PlayEpisode(environment, rl_agent, 0, gamma)
         
     # Required inorder to save final video.
     environment.reset()
