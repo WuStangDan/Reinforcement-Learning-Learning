@@ -1,5 +1,7 @@
 # Implement Q Learning where the state is discretized.
 
+import gym
+import numpy as np
 
 class StateDiscretization:
     def __init__(self):
@@ -33,7 +35,10 @@ class StateDiscretization:
 
 class Agent:
     def __init__(self, update, state_num, action_num, discretized_states):
+        
         self.discretized_states = discretized_states
+        self.state_num = state_num
+        self.action_num = action_num
 
         # Matrix of state action pairs.
         # Returns expected future rewards (discounted) by
@@ -53,10 +58,16 @@ class Agent:
         # Perform the best action (highest expected return)
         # for the given state.
         s_i = self.discretized_states.StateToIndex(state)
+        # Expected returns of taking each action in
+        # current state.
         action_values = self.Q[s_i]
         exploit_action_index = np.argmax(action_values)
 
         return exploit_action_index
+
+    def ExploreAction(self):
+        # Perform a random action.
+        return np.random.choice(self.action_num,1)[0]
 
 
     def UpdateQ(self, state, a_i, G):
@@ -65,10 +76,91 @@ class Agent:
         s_i = self.discretized_states.StateToIndex(state)
 
         self.Q[s_i, a_i] += self.alpha * (G -  self.Q[s_i, a_i])
+
+    def GetMaxQ(self, state):
+        # Return the max Q value for a specific state.
+        s_i = self.discretized_states.StateToIndex(state)
+        return np.max(self.Q[s_i])
         
     
         
 
+def PlayEpisode(env, agent, epsilon, gamma):
+    # Reset playing environment.
+    s_t0 = env.reset()
+
+    total_episode_reward = 0
+    time_steps = 0
+    episode_over = False
+
+    while (not over):     # and (time_steps < 5000):
+        # Determine whether to explore or exploit.
+        if (np.random.random() < epsilon):
+            # Explore.
+            a_t0 = agent.ExploreAction()
+        else:
+            # Exploit.
+            a_t0 = agent.ExploitAction(s_t0)
+            
+        # Perform action and move to next state.
+        s_t1, reward, episode_over, info = env.step(a_t0)
+
+
+        total_episode_reward += reward
+
+        # Check if episode is over, if yes and episode hasn't reached
+        # max time steps, apply negative reward.
+        if episode_over and (time_steps < 199):
+            reward -= 300
+
+        # Calculate return and update Q.
+        G = reward + gamma*agent.GetMaxQ(s_t1)
+        agent.UpdateQ(s_t0, a_t0, G)
+
+        time_steps += 1
+
+
+    return total_episode_reward
+
+
+if __name__ == '__main__':
+    environment = gym.make('CartPole-v1')
+    states_dis = StateDiscretization()
+
+    # Set future rewards discount rate.
+    gamma = 0.9
+
+    
+    rl_agent = Agent(0.001, 10**4, 2, states_dis)
+
+    episode_num = 1000
+    all_episode_r = np.zeros(episode_num)
+
+    for i in range(episode_num):
+        # Reduce epsilon over time.
+        eps = 1.0/np.sqrt(n+1)
+
+        # Play episode.
+        ep_reward = PlayEpisode(environment, rl_agent, eps, gamma)
+        all_episode_r[i] = ep_reward
+
+        
+        
+        
+    
+    
+
+
+
+        
+
+       
+
+            
+                
+
+            
+            
         
         
 
