@@ -1,7 +1,9 @@
 # Implement Q Learning where the state is discretized.
+# Uses what I learned from 
 
 import gym
 import numpy as np
+import matplotlib.pyplot as plt
 
 class StateDiscretization:
     def __init__(self):
@@ -81,6 +83,18 @@ class Agent:
         # Return the max Q value for a specific state.
         s_i = self.discretized_states.StateToIndex(state)
         return np.max(self.Q[s_i])
+
+    def GetAlpha(self):
+        return self.alpha
+
+    def SetAlpha(self, new_alpha):
+        self.alpha = new_alpha
+
+    def SetBestQ(self):
+        self.Q_best = self.Q
+
+    def SetQToBest(self):
+        self.Q = self.Q_best
         
     
         
@@ -93,7 +107,7 @@ def PlayEpisode(env, agent, epsilon, gamma):
     time_steps = 0
     episode_over = False
 
-    while (not over):     # and (time_steps < 5000):
+    while (not episode_over):     # and (time_steps < 5000):
         # Determine whether to explore or exploit.
         if (np.random.random() < epsilon):
             # Explore.
@@ -110,12 +124,15 @@ def PlayEpisode(env, agent, epsilon, gamma):
 
         # Check if episode is over, if yes and episode hasn't reached
         # max time steps, apply negative reward.
-        if episode_over and (time_steps < 199):
+        if episode_over: #and (time_steps < 499):
             reward -= 300
 
         # Calculate return and update Q.
         G = reward + gamma*agent.GetMaxQ(s_t1)
         agent.UpdateQ(s_t0, a_t0, G)
+
+        # t1 becomes t0.
+        s_t0 = s_t1
 
         time_steps += 1
 
@@ -129,20 +146,51 @@ if __name__ == '__main__':
 
     # Set future rewards discount rate.
     gamma = 0.9
-
     
-    rl_agent = Agent(0.001, 10**4, 2, states_dis)
+    initial_alpha = 0.05
+    learning_change = 0.9997
 
-    episode_num = 1000
+    rl_agent = Agent(initial_alpha, 10**4, 2, states_dis)
+
+    episode_num = 10000
     all_episode_r = np.zeros(episode_num)
+    max_episode_r = 0
 
     for i in range(episode_num):
         # Reduce epsilon over time.
-        eps = 1.0/np.sqrt(n+1)
+        eps = 1.0/np.sqrt(i+1)
 
         # Play episode.
         ep_reward = PlayEpisode(environment, rl_agent, eps, gamma)
         all_episode_r[i] = ep_reward
+
+        # Record max reward from last 100 episodes.
+        if ep_reward > max_episode_r:
+            max_episode_r = ep_reward
+
+        rl_agent.SetAlpha(rl_agent.GetAlpha()*learning_change)
+
+        # Every 100 episodes, print average reward over last 100.
+        if i % 100 == 0:
+            print("Episode", i, "average reward", all_episode_r[i-99:i+1].mean())
+            print("Max reward", max_episode_r, "Alpha %.4f" % rl_agent.GetAlpha(), "\n")
+            max_episode_r = 0
+
+
+    print("Episode", i, "average reward", all_episode_r[i-99:i+1].mean())
+        
+    plt.plot(all_episode_r)
+    plt.title("Episode Rewards")
+    plt.show()
+
+    moving_average_r = np.zeros(len(all_episode_r))
+    for i in range(1, len(all_episode_r)):
+        moving_average_r[i] = all_episode_r[i-99:i+1].mean()
+
+    plt.plot(moving_average_r)
+    plt.title("Average Reward of Last 100 Episodes")
+    plt.show()
+    
 
         
         
