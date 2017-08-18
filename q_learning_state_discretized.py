@@ -158,7 +158,7 @@ if __name__ == '__main__':
 
     rl_agent = Agent(initial_alpha, 10**4, 2, states_dis)
 
-    episode_num = 1500
+    episode_num = 10000
     all_episode_r = np.zeros(episode_num)
     max_episode_r = 0
     best_100_avg = 0
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     # No explore moves and don't update Q.
     rl_agent.SetQToBest()
     rl_agent.SetAlpha(0)
-    episode_num = 20
+    episode_num = 10
     all_episode_r = np.zeros(episode_num)
     environment = Monitor(environment, directory='tmp/videos',video_callable=VideoWrite, write_upon_reset=True, force=True)
     
